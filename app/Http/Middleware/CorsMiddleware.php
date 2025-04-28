@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -6,19 +7,29 @@ use Illuminate\Http\Request;
 
 class CorsMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @return mixed
-     */
     public function handle(Request $request, Closure $next)
     {
-        return $next($request)
-        ->header('Access-Control-Allow-Origin', 'http://localhost:5173')  // Ganti dengan origin yang sesuai
-        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With, Authorization, Origin')
-        ->header('Access-Control-Allow-Credentials', 'true');
+        // Jika method OPTIONS (preflight), langsung balikin respons kosong
+        if ($request->getMethod() === "OPTIONS") {
+            return response()->json('OK', 200, $this->getCorsHeaders());
+        }
+
+        // Untuk request biasa, lanjutkan dan tambahkan header CORS
+        $response = $next($request);
+
+        foreach ($this->getCorsHeaders() as $key => $value) {
+            $response->headers->set($key, $value);
+        }
+
+        return $response;
+    }
+
+    private function getCorsHeaders()
+    {
+        return [
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers' => 'Origin, Content-Type, Authorization, X-Requested-With',
+        ];
     }
 }
